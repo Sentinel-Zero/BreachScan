@@ -1,0 +1,32 @@
+[
+    {
+        "id": "host-1",
+        "hostname": "server1.lab.local",
+        "ipv4s": [
+            "10.0.0.10"
+        ],
+        "risk_score": 72,
+        "critical_vulns": 3,
+        "high_vulns": 5
+    },
+    {
+        "id": "host-2",
+        "hostname": "server2.lab.local",
+        "ipv4s": [
+            "10.0.0.11"
+        ],
+        "risk_score": 45,
+        "critical_vulns": 0,
+        "high_vulns": 2
+    },
+    {
+        "id": "host-3",
+        "hostname": "server2.lab.local",
+        "ipv4s": [
+            "10.0.0.12"
+        ],
+        "risk_score": 45,
+        "critical_vulns": 0,
+        "high_vulns": 2
+    }
+]
