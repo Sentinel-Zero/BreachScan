@@ -37,6 +37,34 @@ BreachScan/
 
 ---
 
+## Environment Configuration
+
+Runtime settings and (future) credentials are loaded via `pydantic` BaseSettings in `breachscan_backend/app/config.py`. The loader looks for a `.env` file at the project root.
+
+1. Copy `.env.example` to `.env`:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+2. Edit the new `.env` and fill in real values (leave Tenable keys blank if you are still using mock data):
+
+```
+TENABLE_ACCESS_KEY=your_access_key_here
+TENABLE_SECRET_KEY=your_secret_key_here
+TENABLE_BASE_URL=https://cloud.tenable.com
+APP_HOST=0.0.0.0
+APP_PORT=8000
+LOG_LEVEL=info
+SCHEDULE_EXPANSION_LIMIT=4096
+```
+
+3. Restart the server after changes so settings reload.
+
+Never commit a populated `.env` with real secrets; keep only `.env.example` under version control.
+
+---
+
 ## Setup (Windows PowerShell)
 
 1) Create and activate a virtual environment

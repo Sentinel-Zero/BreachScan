@@ -17,6 +17,7 @@ from pathlib import Path
 import json
 from typing import List, Dict, Any
 from uuid import uuid4
+from datetime import datetime, timedelta
 
 
 DATA_PATH = Path(__file__).resolve().parent / "sample_assets.json"
@@ -78,14 +79,74 @@ def peek_assets_from_tenable(limit: int | None = None) -> List[Dict[str, Any]]:
 _mock_scheduled_scans: dict[str, dict] = {}
 
 
+def _compute_next_run(schedule: dict) -> str | None:
+    """Compute the next_run_at timestamp (ISO) for the given schedule.
+
+    All times treated as naive UTC. If a once schedule is in the past,
+    returns None. For recurring schedules, finds the next occurrence
+    strictly after 'now'.
+    """
+    now = datetime.utcnow()
+    t = schedule.get("time") or "00:00"
+    try:
+        hour, minute = [int(x) for x in t.split(":", 1)]
+    except ValueError:
+        hour, minute = 0, 0
+    stype = schedule.get("type")
+    if stype == "once":
+        ds = schedule.get("date")
+        if not ds:
+            return None
+        try:
+            y, m, d = [int(x) for x in ds.split("-")]
+            run_dt = datetime(y, m, d, hour, minute)
+        except ValueError:
+            return None
+        if run_dt <= now:
+            return None
+        return run_dt.isoformat()
+    if stype == "daily":
+        run_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0)
+        if run_dt <= now:
+            run_dt += timedelta(days=1)
+        return run_dt.isoformat()
+    if stype == "weekly":
+        day_name = schedule.get("day") or ""
+        day_map = {"Monday":0,"Tuesday":1,"Wednesday":2,"Thursday":3,"Friday":4,"Saturday":5,"Sunday":6}
+        target_idx = day_map.get(day_name)
+        if target_idx is None:
+            return None
+        current_idx = now.weekday()  # Monday=0
+        days_ahead = (target_idx - current_idx) % 7
+        run_dt = now.replace(hour=hour, minute=minute, second=0, microsecond=0) + timedelta(days=days_ahead)
+        if days_ahead == 0 and run_dt <= now:
+            run_dt += timedelta(days=7)
+        return run_dt.isoformat()
+    # Fallback
+    return None
+
+
 def create_mock_scheduled_scan(name: str, targets: list[str], schedule: dict) -> dict:
-    """Create a mock scheduled scan and store it in memory."""
+    """Create a mock scheduled scan and store it in memory.
+
+    Adds metadata fields:
+    - created_at: ISO timestamp (UTC)
+    - enabled: bool (always True initially)
+    - expanded_target_count: number of discrete targets after expansion
+    - next_run_at: first future run time (None if once schedule already past)
+    """
     scan_id = str(uuid4())
+    meta_schedule = dict(schedule)
+    next_run = _compute_next_run(meta_schedule)
     scan = {
         "id": scan_id,
         "name": name,
         "targets": targets,
-        "schedule": schedule,
+        "expanded_target_count": len(targets),
+        "schedule": meta_schedule,
+        "next_run_at": next_run,
+        "created_at": datetime.utcnow().isoformat(),
+        "enabled": True,
         "status": "scheduled",
     }
     _mock_scheduled_scans[scan_id] = scan

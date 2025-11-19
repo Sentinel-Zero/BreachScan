@@ -14,6 +14,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 from datetime import date as Date
+from ..config import settings
 import ipaddress
 from ..tenable_client import (
     refresh_assets_from_tenable,
@@ -162,7 +163,7 @@ def get_scheduled_scan(scan_id: str):
 # -----------------------------
 # Helpers
 # -----------------------------
-MAX_TARGETS_EXPANSION = 4096
+MAX_TARGETS_EXPANSION = settings.schedule_expansion_limit
 
 
 def _expand_targets(tokens: list[str]) -> list[str]:
