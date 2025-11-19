@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BreachScan • Scheduled Scans</title>
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; background:#0f1115; color:#e4e7ec; }
+    h1 { margin: 0 0 1rem; }
+    .grid { display:grid; grid-template-columns: 1fr; gap: .75rem; }
+    .card { background:#111621; border:1px solid #1e2630; border-radius:8px; padding:1rem; }
+    .muted { opacity:.7; font-size:.9rem; }
+    .pill { display:inline-block; padding:.15rem .5rem; border-radius:999px; background:#1e2630; font-size:.75rem; }
+    a { color:#5fb3ff; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    .row { display:flex; gap:.75rem; align-items:center; justify-content:space-between; flex-wrap:wrap; }
+    input, select { padding:.4rem .5rem; background:#1b2330; color:#e4e7ec; border:1px solid #2b3441; border-radius:6px; }
+    button { padding:.5rem .75rem; background:#1e6fff; border:none; color:#fff; border-radius:6px; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:default; }
+    .empty { opacity:.7; font-style:italic; }
+  </style>
+</head>
+<body>
+  <h1>Scheduled Scans</h1>
+  <div class="row" style="margin-bottom:1rem;">
+    <div class="muted">This is a mock view backed by in-memory data.</div>
+    <div>
+      <a href="/">Home</a>
+      <span class="muted">·</span>
+      <a href="/docs" target="_blank">API Docs</a>
+    </div>
+  </div>
+
+  <div class="row" style="margin-bottom:1rem; gap:.5rem;">
+    <select id="filterType">
+      <option value="all">All types</option>
+      <option value="once">Once</option>
+      <option value="daily">Daily</option>
+      <option value="weekly">Weekly</option>
+    </select>
+    <button id="refreshBtn">Refresh</button>
+  </div>
+
+  <div id="list" class="grid"></div>
+  <div id="empty" class="empty" style="display:none;">No scheduled scans found.</div>
+
+  <script>
+    const listEl = document.getElementById('list');
+    const emptyEl = document.getElementById('empty');
+    const filterEl = document.getElementById('filterType');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    function formatSchedule(s) {
+      if (!s) return '—';
+      if (s.type === 'weekly') return `Weekly on ${s.day} at ${s.time}`;
+      if (s.type === 'daily') return `Daily at ${s.time}`;
+      return `Once at ${s.time}`;
+    }
+
+    function render(scans) {
+      const type = filterEl.value;
+      const filtered = scans.filter(s => type === 'all' ? true : (s.schedule?.type === type));
+      listEl.innerHTML = '';
+      if (filtered.length === 0) {
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      for (const s of filtered) {
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.innerHTML = `
+          <div class="row">
+            <strong>${s.name}</strong>
+            <span class="pill">${s.schedule?.type ?? 'unknown'}</span>
+          </div>
+          <div class="muted">${formatSchedule(s.schedule)}</div>
+          <div style="margin-top:.5rem;">Targets: <code>${(s.targets||[]).join(', ')}</code></div>
+          <div class="muted" style="margin-top:.5rem;">id: ${s.id}</div>
+        `;
+        listEl.appendChild(card);
+      }
+    }
+
+    async function load() {
+      refreshBtn.disabled = true;
+      try {
+        const res = await fetch('/tenable/scheduled-scans');
+        const data = await res.json();
+        render(data.scans || []);
+      } catch (e) {
+        listEl.innerHTML = '<div class="card">Failed to load scheduled scans.</div>';
+      } finally {
+        refreshBtn.disabled = false;
+      }
+    }
+
+    filterEl.addEventListener('change', load);
+    refreshBtn.addEventListener('click', load);
+    load();
+  </script>
+</body>
+</html>

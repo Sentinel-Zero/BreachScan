@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BreachScan • Scheduler</title>
+  <style>
+    :root {
+      --bg:#0f1115; --fg:#e4e7ec; --panel:#111621; --border:#1e2630; --muted:#9aa4b2;
+      --accent:#1e6fff; --accent-2:#5fb3ff; --chip:#1e2630; --warn:#ffb020;
+    }
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; background:var(--bg); color:var(--fg); }
+    a { color:var(--accent-2); text-decoration:none; } a:hover { text-decoration:underline; }
+    .row { display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+    .col { display:flex; flex-direction:column; gap:.5rem; }
+    .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:1rem; }
+    .muted { color:var(--muted); }
+    input, select { padding:.5rem .6rem; background:#1b2330; color:var(--fg); border:1px solid #2b3441; border-radius:8px; }
+    button { padding:.55rem .9rem; background:var(--accent); color:#fff; border:none; border-radius:8px; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:default; }
+    .grid { display:grid; grid-template-columns: repeat(7, 1fr); gap:.5rem; }
+    .day { border:1px solid var(--border); border-radius:8px; min-height:110px; padding:.5rem; background:var(--panel); display:flex; flex-direction:column; }
+    .day .num { font-weight:600; opacity:.9; }
+    .chip { display:inline-block; background:var(--chip); padding:.15rem .4rem; border-radius:999px; font-size:.75rem; margin-right:.25rem; }
+    .event { margin-top:.35rem; font-size:.85rem; }
+    .hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:.5rem; }
+    .btn { background:#1a2230; border:1px solid var(--border); color:var(--fg); }
+    .legend { display:flex; gap:.5rem; align-items:center; }
+    .legend .swatch { width:10px; height:10px; border-radius:2px; display:inline-block; }
+    .sw-daily { background:#3a7bd5; } .sw-weekly { background:#8e7df0; } .sw-once { background:#ff8a65; }
+    .tag { font-size:.8rem; padding:.1rem .4rem; border-radius:999px; background:var(--chip); }
+    .warning { color:var(--warn); }
+    .section-title { margin:1.25rem 0 .5rem; font-size:1.1rem; }
+  </style>
+</head>
+<body>
+  <div class="row" style="justify-content:space-between; margin-bottom:1rem;">
+    <div>
+      <h1 style="margin:0;">Scheduler</h1>
+      <div class="muted">Create mock scheduled scans and view them on a simple calendar.</div>
+    </div>
+    <div class="row">
+      <a href="/">Home</a>
+      <span class="muted">·</span>
+      <a href="/docs" target="_blank">API Docs</a>
+    </div>
+  </div>
+
+  <div class="row" style="gap:1rem; align-items:flex-start;">
+    <!-- Create form -->
+    <div class="panel" style="min-width:320px; max-width:420px; flex:1;">
+      <div class="section-title">Create Scheduled Scan</div>
+      <div class="col">
+        <label>Name
+          <input id="name" type="text" placeholder="Weekly External" />
+        </label>
+        <label>Targets (comma-separated; IP, CIDR, or range)
+          <input id="targets" type="text" placeholder="10.0.0.10, 10.0.0.0/30, 10.0.0.10-10.0.0.20" />
+        </label>
+        <div class="row">
+          <label>Type
+            <select id="type">
+              <option value="once">Once</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+            </select>
+          </label>
+          <label>Day (for weekly)
+            <select id="day">
+              <option value="">—</option>
+              <option>Sunday</option>
+              <option>Monday</option>
+              <option>Tuesday</option>
+              <option>Wednesday</option>
+              <option>Thursday</option>
+              <option>Friday</option>
+              <option>Saturday</option>
+            </select>
+          </label>
+          <label>Date (for once)
+            <input id="date" type="date" />
+          </label>
+          <label>Time
+            <input id="time" type="time" value="02:00" />
+          </label>
+        </div>
+        <div class="row">
+          <button id="createBtn">Create</button>
+          <div id="msg" class="muted"></div>
+        </div>
+        <div class="muted" style="margin-top:.25rem;">
+          Hint: Enter IPv4 targets as IPs, CIDRs, or dash ranges. Example: 10.0.0.10, 10.0.0.0/30, 10.0.0.10-10.0.0.20. For weekly schedules, pick a day; for daily/once, day is ignored.
+        </div>
+      </div>
+    </div>
+
+    <!-- Calendar -->
+    <div class="panel" style="flex:2; min-width:560px;">
+      <div class="hdr">
+        <div class="row">
+          <button class="btn" id="prevBtn">◀</button>
+          <div id="monthLabel" style="font-weight:600;">&nbsp;</div>
+          <button class="btn" id="nextBtn">▶</button>
+        </div>
+        <div class="legend">
+          <span class="swatch sw-daily"></span><span class="muted">Daily</span>
+          <span class="swatch sw-weekly"></span><span class="muted">Weekly</span>
+          <span class="swatch sw-once"></span><span class="muted">Once (not dated)</span>
+        </div>
+      </div>
+      <div class="grid muted" style="margin-bottom:.25rem;">
+        <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+      </div>
+      <div id="grid" class="grid"></div>
+      <div id="onceList" class="col" style="margin-top:.5rem; display:none;"></div>
+    </div>
+  </div>
+
+  <script>
+    const nameEl = document.getElementById('name');
+    const targetsEl = document.getElementById('targets');
+    const typeEl = document.getElementById('type');
+    const dayEl = document.getElementById('day');
+    const timeEl = document.getElementById('time');
+    const dateEl = document.getElementById('date');
+    const createBtn = document.getElementById('createBtn');
+    const msgEl = document.getElementById('msg');
+
+    const monthLabel = document.getElementById('monthLabel');
+    const grid = document.getElementById('grid');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const onceList = document.getElementById('onceList');
+
+    let scans = [];
+    let viewDate = new Date(); // current month
+
+    function dowNameToIndex(name){
+      return ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'].indexOf(name);
+    }
+
+    function firstDayOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+    function daysInMonth(d){ return new Date(d.getFullYear(), d.getMonth()+1, 0).getDate(); }
+
+    function renderCalendar(){
+      const year = viewDate.getFullYear();
+      const month = viewDate.getMonth();
+      monthLabel.textContent = viewDate.toLocaleString(undefined, { month:'long', year:'numeric' });
+
+      grid.innerHTML = '';
+      onceList.innerHTML = '';
+
+      const first = firstDayOfMonth(viewDate);
+      const total = daysInMonth(viewDate);
+      const startOffset = first.getDay();
+
+      // Create placeholders for days before the 1st
+      for(let i=0;i<startOffset;i++){
+        const cell = document.createElement('div');
+        cell.className = 'day';
+        cell.style.opacity = '.35';
+        grid.appendChild(cell);
+      }
+
+      // Build schedule map day->events
+      const map = new Map(); // day number (1..n) => array of events
+      const once = [];
+
+      for(const s of scans){
+        const sch = s.schedule || {};
+        const t = (sch.type||'once');
+        if(t === 'daily'){
+          for(let dayNum=1; dayNum<=total; dayNum++){
+            const arr = map.get(dayNum) || []; arr.push({scan:s, type:'daily'}); map.set(dayNum, arr);
+          }
+        } else if(t === 'weekly'){
+          const idx = dowNameToIndex(sch.day||'');
+          if(idx >= 0){
+            // add all weekdays matching idx in this month
+            for(let dayNum=1; dayNum<=total; dayNum++){
+              const d = new Date(year, month, dayNum);
+              if(d.getDay() === idx){
+                const arr = map.get(dayNum) || []; arr.push({scan:s, type:'weekly'}); map.set(dayNum, arr);
+              }
+            }
+          }
+        } else {
+          // once: place on the exact date if in this month
+          const ds = sch.date; // expected YYYY-MM-DD
+          if (ds) {
+            const parts = ds.split('-').map(Number);
+            if (parts.length === 3) {
+              const d = new Date(parts[0], parts[1]-1, parts[2]);
+              if (d.getFullYear() === year && d.getMonth() === month) {
+                const dayNum = d.getDate();
+                const arr = map.get(dayNum) || []; arr.push({scan:s, type:'once'}); map.set(dayNum, arr);
+              }
+            }
+          } else {
+            once.push(s);
+          }
+        }
+      }
+
+      // Render days
+      for(let dayNum=1; dayNum<=total; dayNum++){
+        const cell = document.createElement('div');
+        cell.className = 'day';
+        const head = document.createElement('div');
+        head.className = 'num';
+        head.textContent = dayNum;
+        cell.appendChild(head);
+
+        const events = map.get(dayNum) || [];
+        for(const ev of events.slice(0,3)){
+          const e = document.createElement('div');
+          e.className = 'event';
+          const color = ev.type==='daily' ? '#3a7bd5' : (ev.type==='weekly' ? '#8e7df0' : '#ff8a65');
+          e.innerHTML = `<span class="chip" style="background:${color}">${ev.type}</span> ${ev.scan.name} <span class="muted">@ ${ev.scan.schedule?.time||''}</span>`;
+          cell.appendChild(e);
+        }
+        if(events.length > 3){
+          const more = document.createElement('div');
+          more.className = 'event muted';
+          more.textContent = `+${events.length-3} more`;
+          cell.appendChild(more);
+        }
+        grid.appendChild(cell);
+      }
+
+      // Render once list for any without date (should be rare)
+      if(once.length){
+        onceList.style.display = '';
+        const header = document.createElement('div');
+        header.className = 'section-title';
+        header.textContent = 'Once (no date provided)';
+        onceList.appendChild(header);
+        for(const s of once){
+          const row = document.createElement('div');
+          row.className = 'row';
+          row.innerHTML = `
+            <div><span class="tag">once</span> ${s.name} <span class="muted">@ ${s.schedule?.time||''}</span></div>
+            <div class="muted">id: ${s.id}</div>
+          `;
+          onceList.appendChild(row);
+        }
+      } else {
+        onceList.style.display = 'none';
+      }
+    }
+
+    async function loadScans(){
+      const res = await fetch('/tenable/scheduled-scans');
+      const data = await res.json();
+      scans = data.scans || [];
+      renderCalendar();
+    }
+
+    prevBtn.addEventListener('click', ()=>{ viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1); renderCalendar(); });
+    nextBtn.addEventListener('click', ()=>{ viewDate = new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1); renderCalendar(); });
+
+    typeEl.addEventListener('change', ()=>{
+      const v = typeEl.value;
+      dayEl.disabled = (v !== 'weekly');
+      if(v !== 'weekly') dayEl.value = '';
+      dateEl.disabled = (v !== 'once');
+      if(v !== 'once') dateEl.value = '';
+    });
+    typeEl.dispatchEvent(new Event('change'));
+
+    createBtn.addEventListener('click', async ()=>{
+      msgEl.textContent = '';
+      const name = nameEl.value.trim();
+      const targets = (targetsEl.value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const type = typeEl.value;
+      const day = dayEl.value || null;
+      const time = timeEl.value;
+      const dateVal = dateEl.value || null;
+
+      if(!name){ msgEl.textContent = 'Enter a name.'; return; }
+      if(!time){ msgEl.textContent = 'Pick a time.'; return; }
+      if(targets.length === 0){ msgEl.textContent = 'Enter at least one target (IP, CIDR, or range).'; return; }
+      if(type==='weekly' && !day){ msgEl.textContent = 'Pick a day for weekly schedules.'; return; }
+      if(type==='once' && !dateVal){ msgEl.textContent = 'Pick a date for once schedules.'; return; }
+
+      createBtn.disabled = true;
+      try{
+        const body = { name, targets, schedule: { type, day, date: dateVal, time } };
+        const res = await fetch('/tenable/scheduled-scans', {
+          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)
+        });
+        if(!res.ok){
+          const err = await res.json().catch(()=>({detail:'error'}));
+          msgEl.textContent = 'Failed: ' + (err.detail || res.status);
+        } else {
+          msgEl.textContent = 'Created.';
+          nameEl.value = ''; targetsEl.value = '';
+          await loadScans();
+        }
+      }catch(e){
+        msgEl.textContent = 'Error creating: ' + String(e);
+      }finally{
+        createBtn.disabled = false;
+      }
+    });
+
+    loadScans();
+  </script>
+</body>
+</html>

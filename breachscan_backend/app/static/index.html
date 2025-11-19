@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>BreachScan Backend</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 3rem; background:#0f1115; color:#e4e7ec; }
+    main { max-width: 680px; }
+    h1 { font-size: 2.2rem; margin-bottom: .25rem; }
+    .tag { display:inline-block; padding:.25rem .5rem; background:#1e2630; border-radius:4px; font-size:.75rem; letter-spacing:.5px; }
+    a { color:#5fb3ff; text-decoration:none; }
+    a:hover { text-decoration:underline; }
+    code { background:#1e2630; padding:.15rem .35rem; border-radius:4px; font-size:.9rem; }
+    footer { margin-top:3rem; font-size:.75rem; opacity:.6; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>BreachScan Backend</h1>
+    <div class="tag">status: running</div>
+    <p>This FastAPI service is up. Use the API docs or curl examples below to explore mock Tenable/Nessus-style asset data.</p>
+
+    <h2>Quick Links</h2>
+    <ul>
+      <li><a href="/docs">Swagger UI</a></li>
+      <li><a href="/redoc">ReDoc</a></li>
+      <li><a href="/assets" target="_blank">GET /assets</a></li>
+      <li><a href="/static/schedule.html">Scheduled Scans Calendar</a></li>
+      <li><a href="/static/scheduler.html">Scheduler (form + calendar)</a></li>
+    </ul>
+
+    <h2>Lookup Asset by ID</h2>
+    <p>Enter an asset ID (e.g., <code>host-1</code>) and fetch its details.</p>
+    <div style="display:flex; gap:.5rem; align-items:center;">
+      <input id="assetIdInput" type="text" placeholder="host-1" aria-label="asset id" style="padding:.5rem; background:#1e2630; color:#e4e7ec; border:1px solid #2b3441; border-radius:4px;" />
+      <button id="fetchBtn" style="padding:.5rem .75rem; background:#1e6fff; border:none; color:white; border-radius:4px; cursor:pointer;">Fetch</button>
+    </div>
+    <pre id="assetOutput" style="margin-top:1rem; background:#0b0e13; padding:1rem; border:1px solid #1e2630; border-radius:6px; overflow:auto;"></pre>
+
+    <h2>Example Commands (PowerShell)</h2>
+    <pre><code>curl http://localhost:8000/assets
+curl http://localhost:8000/assets/host-001</code></pre>
+
+    <h2>Next Steps</h2>
+    <ul>
+      <li>Replace JSON with real ingestion via pyTenable.</li>
+      <li>Add filtering & risk scoring endpoints.</li>
+      <li>Lock down CORS before wider exposure.</li>
+    </ul>
+
+    <footer>Mock data only • Built with FastAPI • &copy; 2025</footer>
+  </main>
+  <script>
+    const input = document.getElementById('assetIdInput');
+    const btn = document.getElementById('fetchBtn');
+    const out = document.getElementById('assetOutput');
+
+    async function fetchAsset() {
+      const id = (input.value || '').trim();
+      if (!id) {
+        out.textContent = 'Please enter an asset id (e.g., host-1).';
+        return;
+      }
+      out.textContent = 'Fetching...';
+      try {
+        const res = await fetch(`/assets/${encodeURIComponent(id)}`);
+        const data = await res.json();
+        out.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        out.textContent = 'Error: ' + String(err);
+      }
+    }
+
+    btn.addEventListener('click', fetchAsset);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') fetchAsset();
+    });
+  </script>
+</body>
+</html>
