@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>BreachScan - Assets & Scheduled Scans</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #0b1120; color: #e5e7eb; }
+    h1 { margin-bottom: 10px; }
+    h2 { margin-top: 32px; margin-bottom: 10px; }
+    .subtitle { color: #9ca3af; margin-bottom: 20px; }
+
+    nav a { text-decoration: none; margin-right: 12px; }
+    nav a.active { color: #e5e7eb; font-weight: bold; }
+    nav a.inactive { color: #9ca3af; }
+
+    table { border-collapse: collapse; width: 100%; background: #020617; margin-top: 8px; }
+    th, td { border: 1px solid #1f2933; padding: 8px; font-size: 14px; }
+    th { background: #111827; text-align: left; }
+    tr:nth-child(even) { background: #020617; }
+    tr:nth-child(odd) { background: #020617; }
+
+    .risk-high { color: #f97373; font-weight: bold; }
+    .risk-med { color: #facc15; }
+    .risk-low { color: #4ade80; }
+    .ip-list, .os-list { font-size: 12px; color: #9ca3af; }
+    .targets { font-size: 12px; color: #9ca3af; }
+    .status-pill { padding: 2px 6px; border-radius: 999px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <nav style="margin-bottom: 16px;">
+    <a href="/" class="active">Assets</a>
+    <a href="/scheduler" class="inactive">Scheduler</a>
+  </nav>
+
+  <h1>BreachScan - Assets</h1>
+  <div class="subtitle">
+    Data from backend: <code>{{ .BackendURL }}/tenable/assets</code>
+  </div>
+
+  {{ if .Assets }}
+  <table>
+    <thead>
+      <tr>
+        <th>Hostname</th>
+        <th>IP(s)</th>
+        <th>Risk Score</th>
+        <th>Critical / High</th>
+        <th>OS</th>
+        <th>Asset ID</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .Assets }}
+      <tr>
+        <td>{{ .Hostname }}</td>
+        <td class="ip-list">
+          {{ range $i, $ip := .IPv4s }}
+            {{ if $i }}, {{ end }}{{ $ip }}
+          {{ end }}
+        </td>
+        <td>
+          {{ if ge .RiskScore 70.0 }}
+            <span class="risk-high">{{ printf "%.1f" .RiskScore }}</span>
+          {{ else if ge .RiskScore 40.0 }}
+            <span class="risk-med">{{ printf "%.1f" .RiskScore }}</span>
+          {{ else }}
+            <span class="risk-low">{{ printf "%.1f" .RiskScore }}</span>
+          {{ end }}
+        </td>
+        <td>{{ .Critical }} / {{ .High }}</td>
+        <td class="os-list">
+          {{ range $i, $os := .OperatingOS }}
+            {{ if $i }}, {{ end }}{{ $os }}
+          {{ end }}
+        </td>
+        <td>{{ .ID }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+    <p>No assets returned. Did you call <code>/tenable/refresh</code> on the backend?</p>
+  {{ end }}
+
+  <h2>Scheduled Scans</h2>
+  <div class="subtitle">
+    From backend: <code>{{ .BackendURL }}/tenable/scheduled-scans</code>
+  </div>
+
+  {{ if .ScheduledScans }}
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Targets</th>
+        <th>Schedule</th>
+        <th>Next Run</th>
+        <th>Status</th>
+        <th>Created At</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{ range .ScheduledScans }}
+      <tr>
+        <td>{{ .Name }}</td>
+        <td class="targets">
+          {{ range $i, $t := .Targets }}
+            {{ if $i }}, {{ end }}{{ $t }}
+          {{ end }}
+        </td>
+        <td>
+          {{ .Schedule.Type }}
+          {{ if .Schedule.Day }} ({{ .Schedule.Day }}) {{ end }}
+          at {{ .Schedule.Time }}
+        </td>
+        <td>
+          {{ if .NextRunAt }}
+            {{ .NextRunAt }}
+          {{ else }}
+            n/a
+          {{ end }}
+        </td>
+        <td>
+          <span class="status-pill">{{ .Status }}</span>
+        </td>
+        <td>{{ .CreatedAt }}</td>
+      </tr>
+      {{ end }}
+    </tbody>
+  </table>
+  {{ else }}
+    <p>No scheduled scans yet. Visit <a href="/scheduler">Scheduler</a> to create one.</p>
+  {{ end }}
+</body>
+</html>
