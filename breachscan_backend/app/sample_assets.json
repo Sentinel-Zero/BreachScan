@@ -1,35 +1,38 @@
 [
     {
-        "id": "host-1",
-        "asset_id": "host-1",
-        "hostname": "server1.lab.local",
-        "ipv4s": [
-            "10.0.0.10"
-        ],
-        "risk_score": 72,
+        "id": "asset-001",
+        "hostname": "web-01.internal.local",
+        "ipv4s": ["10.0.0.10"],
+        "risk_score": 82.5,
         "critical_vulns": 3,
-        "high_vulns": 5
+        "high_vulns": 7,
+        "operating_system": ["Windows Server 2019"]
     },
     {
-        "id": "host-2",
-        "asset_id": "host-2",
-        "hostname": "server2.lab.local",
-        "ipv4s": [
-            "10.0.0.11"
-        ],
-        "risk_score": 45,
-        "critical_vulns": 0,
-        "high_vulns": 2
+        "id": "asset-002",
+        "hostname": "db-01.internal.local",
+        "ipv4s": ["10.0.0.20"],
+        "risk_score": 67.2,
+        "critical_vulns": 1,
+        "high_vulns": 5,
+        "operating_system": ["Ubuntu 22.04 LTS"]
     },
     {
-        "id": "host-3",
-        "asset_id": "host-3",
-        "hostname": "server2.lab.local",
-        "ipv4s": [
-            "10.0.0.12"
-        ],
-        "risk_score": 45,
+        "id": "asset-003",
+        "hostname": "jump-host",
+        "ipv4s": ["10.0.0.30", "192.168.1.10"],
+        "risk_score": 35.0,
         "critical_vulns": 0,
-        "high_vulns": 2
+        "high_vulns": 2,
+        "operating_system": ["Windows 11"]
+    },
+    {
+        "id": "asset-004",
+        "hostname": "internal-api-01",
+        "ipv4s": ["10.0.1.15"],
+        "risk_score": 12.3,
+        "critical_vulns": 0,
+        "high_vulns": 0,
+        "operating_system": ["Rocky Linux 9"]
     }
 ]

@@ -17,7 +17,9 @@
     input { padding:.5rem .6rem; background:#1b2330; color:var(--fg); border:1px solid #2b3441; border-radius:8px; }
     button { padding:.55rem .9rem; background:var(--accent); color:#fff; border:none; border-radius:8px; cursor:pointer; }
     button:disabled { opacity:.6; cursor:default; }
-    pre, code { background:#1b2330; padding:.6rem .75rem; border-radius:8px; font-size:.85rem; line-height:1.3; overflow:auto; }
+    pre, code { background:#1b2330; padding:.6rem .75rem; border-radius:8px; font-size:.85rem; line-height:1.3; overflow:auto; display:block; box-sizing:border-box; }
+    pre { margin:0 0 .75rem; white-space:pre; }
+    code { white-space:pre-wrap; word-break:break-word; }
     ul { list-style:none; padding:0; margin:.5rem 0 0; }
     ul li { margin:.3rem 0; }
     .grid { display:grid; gap:1rem; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
@@ -61,20 +63,21 @@
       <div class="tag">assets</div>
       <h2 style="margin:.5rem 0 .75rem; font-size:1.1rem;">Lookup Asset</h2>
       <div class="row" style="align-items:flex-start;">
-        <input id="assetIdInput" placeholder="host-1" style="flex:1;" />
+        <input id="assetIdInput" placeholder="asset-001" style="flex:1;" />
         <button id="fetchBtn">Fetch</button>
       </div>
       <pre id="assetOutput" style="margin-top:.75rem; min-height:110px;">Enter an asset id.</pre>
-      <div class="muted" style="font-size:.7rem; margin-top:.4rem;">Sample IDs: host-1, host-2 ...</div>
+      <div class="muted" style="font-size:.7rem; margin-top:.4rem;">Sample IDs: asset-001, asset-002, asset-003, asset-004</div>
     </div>
 
     <!-- Panel: curl examples -->
-    <div class="panel">
+    <div class="panel" style="display:flex; flex-direction:column;">
       <div class="tag">examples</div>
       <h2 style="margin:.5rem 0 .75rem; font-size:1.1rem;">curl Examples</h2>
       <pre><code>curl http://localhost:8000/assets
-curl http://localhost:8000/assets/host-1
-curl -X POST http://localhost:8000/tenable/refresh-assets -H "Content-Type: application/json" -d "{\"limit\":5}"</code></pre>
+    curl http://localhost:8000/assets/asset-001
+curl -X POST http://localhost:8000/tenable/refresh -H "Content-Type: application/json" -d '{"limit":5}'</code></pre>
+      <div class="muted" style="font-size:.7rem; margin-top:.25rem;">Tip: Use single quotes on *nix shells; on PowerShell escape quotes: `'{\"limit\":5}'`.</div>
     </div>
   </div>
 

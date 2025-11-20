@@ -49,10 +49,16 @@ def refresh_assets_from_tenable(limit: int | None = None) -> List[Dict[str, Any]
 
 def get_cached_assets() -> List[Dict[str, Any]]:
     """
-    Return the cached assets if we've 'refreshed' them,
-    otherwise return an empty list.
+    Return cached assets; if cache is empty, lazily load from sample_assets.json.
+    This ensures /tenable/assets has data even before an explicit refresh.
     """
-    return _cached_assets or []
+    global _cached_assets
+    if not _cached_assets:
+        try:
+            _cached_assets = _read_assets_from_file()
+        except Exception:
+            _cached_assets = []
+    return _cached_assets
 
 
 def get_cached_asset_by_id(asset_id: str) -> Dict[str, Any] | None:

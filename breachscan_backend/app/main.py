@@ -6,6 +6,7 @@ from pathlib import Path
 from app.routes.assets import router as assets_router
 from app.routes.root import router as root_router
 from app.routes.tenable import router as tenable_router
+from app.tenable_client import refresh_assets_from_tenable
 
 
 app = FastAPI(title="BreachScanner Backend")
@@ -28,3 +29,12 @@ app.include_router(tenable_router)
 static_dir = Path(__file__).parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.on_event("startup")
+async def _preload_assets():
+    try:
+        # Preload mock assets into cache so /tenable/assets isn't empty on first run
+        refresh_assets_from_tenable()
+    except Exception:
+        pass
