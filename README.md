@@ -260,15 +260,6 @@ All data and scheduling logic are mock/prototype quality - not production harden
 
 ---
 
-## 📬 Contact
-
-**Brian D’Hurieux**  
-Cybersecurity Engineer / Software Developer  
-GitHub: https://github.com/Sentinel-Zero
-
-
----
-
 ## 💡 Why I Built This
 
 To demonstrate:
