@@ -78,7 +78,7 @@
             <span class="tag">${s.schedule?.type||''}</span>
           </div>
           <div>${fmtSchedule(s.schedule)}</div>
-          <div class='small'>Next Run: ${s.next_run_at || '—'} | Created: ${s.created_at || '—'} | Enabled: ${s.enabled?'yes':'no'}</div>
+          <div class='small'>Next Run: ${s.next_run_at || '-'} | Created: ${s.created_at || '-'} | Enabled: ${s.enabled?'yes':'no'}</div>
           <div class='small'>Targets (${s.expanded_target_count||targets.length}): ${previewTargets.join(', ')}${more}</div>
           <div class='small'>id: ${s.id}</div>
         `;
