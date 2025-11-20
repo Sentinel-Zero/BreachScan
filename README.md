@@ -289,6 +289,6 @@ This project reflects how I solve engineering problems:
 
 **Brian D’Hurieux**  
 Cybersecurity Engineer / Software Developer  
-- 📧 Email: brian@yourdomain.com  
+- 📧 Email: brian.s.dhurieux@gmail.com
 - 🌐 Website: https://briangineering.com  
 - 🐙 GitHub: https://github.com/Sentinel-Zero
