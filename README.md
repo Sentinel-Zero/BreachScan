@@ -1,4 +1,4 @@
-# BreachScan — Vulnerability Scan Dashboard (Prototype)
+# BreachScan - Vulnerability Scan Dashboard (Prototype)
 *Hands-on project built to practice Go, Python, API design, and Tenable/Nessus-style workflows.*
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
@@ -82,14 +82,14 @@ This project demonstrates rapid learning, cross-language implementation, and the
 
 ## ⚙️ Tech Overview (Non-Technical)
 
-### **Backend — Python (FastAPI)**  
+### **Backend - Python (FastAPI)**  
 - Mock Tenable/Nessus-style API  
 - Asset ingestion + caching  
 - Target expansion + validation  
 - Scan scheduling (in-memory)  
 - Swagger docs at `/docs`  
 
-### **Frontend — Go**  
+### **Frontend - Go**  
 - Lightweight HTTP server  
 - Two pages:
   - Asset list  
@@ -256,7 +256,7 @@ Expansion rules use Python's `ipaddress` and enforce the limit set by `SCHEDULE_
 
 ## ⚠️ Disclaimer
 
-All data and scheduling logic are mock/prototype quality — not production hardened. Replace sample assets and in-memory stores before serious use.
+All data and scheduling logic are mock/prototype quality - not production hardened. Replace sample assets and in-memory stores before serious use.
 
 ---
 
